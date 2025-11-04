@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Privacy Risk Rating</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="container">
+    <header>
+      <h1>Privacy Risk Rating tool</h1>
+      <p class="subtitle">Select ratings to generate a shareable code. Paste a code (or use a URL with #code) to restore.</p>
+    </header>
+
+    <!-- Overview -->
+     <section>
+      <h2>Fundamentals</h2>
+      <div class="field">
+        <label for="riskType">Risk Type</label>
+        <div id="riskType" class="segmented risk-type" role="radiogroup" aria-label="Risk Type"></div>
+      </div>
+
+      <div class="field">
+        <label>Identification Mechanism(s)</label>
+        <div id="idTypes" class="chips" role="group" aria-label="Identification Mechanisms"></div>
+        <small class="hint">Multi-select: Averaging, Singling Out, Inference, Linkage</small>
+      </div>
+      
+     </section>
+
+
+    <!-- Likelihood -->
+    <section>
+      <h2>Likelihood</h2>
+      <div class="field">
+        <label for="cost">Cost</label>
+        <div id="cost" class="segmented" role="radiogroup" aria-label="Cost"></div>
+      </div>
+
+      <div class="field">
+        <label for="linkability">Linkability</label>
+        <div id="linkability" class="segmented" role="radiogroup" aria-label="Linkability"></div>
+      </div>
+
+      <div class="field">
+        <label for="ease">Ease of Execution</label>
+        <div id="ease" class="segmented" role="radiogroup" aria-label="Ease of Execution"></div>
+      </div>
+    </section>
+
+    <!-- Impact -->
+    <section>
+      <h2>Impact</h2>
+      <div class="field">
+        <label for="identifiability">Identifiability</label>
+        <div id="identifiability" class="segmented" role="radiogroup" aria-label="Identifiability"></div>
+      </div>
+
+      <div class="field">
+        <label for="riskType">Risk Type</label>
+        <div id="riskType" class="segmented risk-type" role="radiogroup" aria-label="Risk Type"></div>
+      </div>
+
+      <div class="field">
+        <label>Identification Mechanism(s)</label>
+        <div id="idTypes" class="chips" role="group" aria-label="Identification Mechanisms"></div>
+        <small class="hint">Multi-select: Averaging, Singling Out, Inference, Linkage</small>
+      </div>
+    </section>
+
+    <!-- Scores -->
+    <section>
+      <h2>Scores</h2>
+      <div class="scores">
+        <div><span class="k">Likelihood</span> <span id="score-likelihood" class="v">—</span></div>
+        <div><span class="k">Impact</span> <span id="score-impact" class="v">—</span></div>
+        <div><span class="k">Overall</span> <span id="score-overall" class="v badge">—</span></div>
+      </div>
+    </section>
+
+    <!-- Code controls -->
+    <section>
+      <h2>Code</h2>
+      <div class="code-row">
+        <button id="btn-generate" class="btn">Generate Code</button>
+        <input id="code-output" class="code" type="text" readonly placeholder="Code will appear here…" />
+        <button id="btn-copy" class="btn ghost" title="Copy code to clipboard">Copy</button>
+      </div>
+      <div class="code-row">
+        <input id="code-input" class="code" type="text" placeholder="Paste a code to apply…" />
+        <button id="btn-apply" class="btn">Apply Code</button>
+        <button id="btn-reset" class="btn danger">Reset</button>
+      </div>
+      <small class="hint">Shareable link updates automatically (uses URL hash).</small>
+      <div class="sharelink" id="share-link" aria-live="polite"></div>
+    </section>
+
+    <footer>
+      <small>v1 • Codes are versioned and include CRC-8 to catch typos.</small>
+    </footer>
+  </main>
+
+  <script src="app.js" defer></script>
+</body>
+</html>

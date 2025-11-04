@@ -1,0 +1,200 @@
+/* ==== Corporate Neutral Theme ==== */
+
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --border: #d4d8df;
+  --text: #1e1f21;
+  --text-muted: #60656f;
+  --accent: #2b6cb0;     /* professional blue */
+  --accent-hover: #1f5a96;
+  --danger: #b3261e;
+  --radius: 6px;
+  --gap: 14px;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, Inter, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 32px 20px 60px;
+}
+
+header h1 {
+  margin-top: 0;
+  margin-bottom: 6px;
+  font-size: 26px;
+  font-weight: 600;
+}
+
+.subtitle {
+  margin-top: 0;
+  margin-bottom: 28px;
+  color: var(--text-muted);
+}
+
+/* Panels */
+section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+h2 {
+  font-size: 18px;
+  margin-top: 0;
+  margin-bottom: 16px;
+  font-weight: 600;
+}
+
+.field {
+  margin-bottom: 18px;
+}
+
+.field label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: var(--text);
+}
+
+/* Segmented Controls */
+.segmented {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  background: #f1f2f4;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.segmented .opt {
+  padding: 8px 14px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  cursor: pointer;
+  background: transparent;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.segmented .opt:hover {
+  background: #e4e6ea;
+}
+
+.segmented .opt[aria-pressed="true"] {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent-hover);
+}
+
+/* Chips (Identification Type Multi-select) */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chips .chip {
+  background: #f1f2f4;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.chips .chip[aria-pressed="true"] {
+  background: var(--accent);
+  color: #ffffff;
+  border-color: var(--accent-hover);
+}
+
+/* Score Display */
+.scores {
+  display: flex;
+  gap: var(--gap);
+  font-size: 15px;
+}
+
+.scores .k {
+  color: var(--text-muted);
+  margin-right: 4px;
+}
+
+.badge {
+  padding: 4px 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: #f1f2f4;
+}
+
+/* Code Fields */
+.code-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--gap);
+  margin-bottom: var(--gap);
+}
+
+.code {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: white;
+  font-family: monospace;
+}
+
+.btn {
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: #e8eaed;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.btn:hover {
+  background: #dfe2e6;
+}
+
+.btn.ghost {
+  background: transparent;
+}
+
+.btn.danger {
+  background: #f7e7e7;
+  border-color: #e3b9b9;
+  color: var(--danger);
+}
+
+.btn.danger:hover {
+  background: #f1dada;
+}
+
+.sharelink {
+  color: var(--text-muted);
+  font-size: 13px;
+  margin-top: 6px;
+}
+
+footer {
+  text-align: center;
+  margin-top: 30px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
