@@ -3,94 +3,187 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Privacy Risk Rating</title>
+  <title>Privacy Risk Rating (v2)</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <main class="container">
-    <header>
-      <h1>Privacy Risk Rating tool</h1>
-      <p class="subtitle">Select ratings to generate a shareable code. Paste a code (or use a URL with #code) to restore.</p>
-    </header>
 
-    <!-- Overview -->
-     <section>
+    <!-- 1) CODE INPUT -->
+    <section id="panel-code-input">
+      <h2>Code Input</h2>
+      <p>Input an existing code here to render the corresponding settings in the view</p>
+      <div class="code-row">
+        <input id="finding-ref-input" class="code" type="text" placeholder="Finding Reference (optional, e.g., RPT-12.3)" />
+        <input id="code-input" class="code" type="text" placeholder="Paste [ref]-[code] or just [code]…" />
+        <button id="btn-apply" class="btn">Apply Code</button>
+      </div>
+      <small class="hint">Parser splits on the <em>last</em> hyphen: left → Finding Reference; right → code.</small>
+    </section>
+
+    <!-- 2) OVERVIEW -->
+    <section id="panel-overview">
+      <h2>Overview</h2>
+
+      <div class="field">
+        <label for="findingRef">Finding Reference</label>
+        <input id="findingRef" class="code" type="text" placeholder="Optional label to prefix the generated code (e.g., RPT-12.3)" />
+        <small class="hint">Add your finding ID and it will become part of the reference url</small>
+      </div>
+
+      <div class="field">
+        <label for="scope">Scope of Impact</label>
+        <div id="scope" class="segmented" role="radiogroup" aria-label="Scope of Impact"></div>
+        <small class="hint">Choosing <strong>Security</strong> will hide Privacy Specific controls.</small>
+      </div>
+
+      <div class="field">
+        <label for="dataType">User Data Types affected</label>
+        <div id="dataType" class="segmented" role="radiogroup" aria-label="User Data Type"></div>
+        <small class="hint">Controls which Privacy attacks are applicable.</small>
+      </div>
+
+      <div class="field">
+        <label for="ease">Ease of execution</label>
+        <div id="ease" class="segmented" role="radiogroup" aria-label="Ease of execution"></div>
+        <small class="hint">Single overall driver for Likelihood (Trivial=5 … Expert=1). Privacy budget may reduce this.</small>
+      </div>
+    </section>
+
+    <!-- 3) FUNDAMENTALS -->
+    <section id="panel-fundamentals">
       <h2>Fundamentals</h2>
-      <div class="field">
-        <label for="riskType">Risk Type</label>
-        <div id="riskType" class="segmented risk-type" role="radiogroup" aria-label="Risk Type"></div>
+      <div id="field-confidentiality" class="field">
+        <label for="confidentiality">Confidentiality</label>
+        <small class="hint">Impact on confidentiality of data or systems.</small>
+        <div id="confidentiality" class="segmented long" role="radiogroup" aria-label="Confidentiality"></div>
       </div>
-
-      
-      <div class="field">
-        <label for="ease">Ease of Execution</label>
-        <div id="ease" class="segmented" role="radiogroup" aria-label="Ease of Execution"></div>
+      <div id="field-integrity" class="field">
+        <label for="integrity">Integrity</label>
+        <small class="hint">Impact on accuracy and trustworthiness of data.</small>
+        <div id="integrity" class="segmented long" role="radiogroup" aria-label="Integrity"></div>
       </div>
-
-      <div class="field">
-        <label>Identification Mechanism(s)</label>
-        <div id="idTypes" class="chips" role="group" aria-label="Identification Mechanisms"></div>
-        <small class="hint">Multi-select: Averaging, Singling Out, Inference, Linkage</small>
-      </div>
-      
-     </section>
-
-
-    <!-- Likelihood -->
-    <section>
-      <h2>Likelihood</h2>
-      <div class="field">
-        <label for="cost">Cost</label>
-        <div id="cost" class="segmented" role="radiogroup" aria-label="Cost"></div>
-      </div>
-
-      <div class="field">
-        <label for="linkability">Linkability</label>
-        <div id="linkability" class="segmented" role="radiogroup" aria-label="Linkability"></div>
+      <div id="field-availability" class="field">
+        <label for="availability">Availability</label>
+        <small class="hint">Impact on continuity and uptime of services.</small>
+        <div id="availability" class="segmented long" role="radiogroup" aria-label="Availability"></div>
       </div>
     </section>
 
-    <!-- Impact -->
-    <section>
-      <h2>Impact</h2>
-      <div class="field">
-        <label for="identifiability">Identifiability</label>
-        <div id="identifiability" class="segmented" role="radiogroup" aria-label="Identifiability"></div>
+    <!-- 4) PRIVACY SPECIFIC -->
+    <section id="panel-privacy">
+      <h2>Privacy Specific</h2>
+
+      <div id="privacy-disabled" class="alert muted hidden">
+        Privacy Specific controls are hidden because Scope is <strong>Security</strong>.
       </div>
 
-    </section>
+      <div class="fieldset" id="privacy-fields">
+        <div id="field-avg" class="field">
+          <label for="avg">Averaging</label>
+          <small class="hint">Inferring true values via averaging (commonly relevant to aggregated data).</small>
+          <div id="avg" class="segmented long" role="radiogroup" aria-label="Averaging"></div>
+        </div>
 
-    <!-- Scores -->
-    <section>
-      <h2>Scores</h2>
-      <div class="scores">
-        <div><span class="k">Likelihood</span> <span id="score-likelihood" class="v">—</span></div>
-        <div><span class="k">Impact</span> <span id="score-impact" class="v">—</span></div>
-        <div><span class="k">Overall</span> <span id="score-overall" class="v badge">—</span></div>
+        <div id="field-inference" class="field">
+          <label for="inference">Inference (sample size)</label>
+          <small class="hint">Deducing presence of an individual from small samples (aggregated).</small>
+          <div id="inference" class="segmented long" role="radiogroup" aria-label="Inference"></div>
+        </div>
+
+        <div id="field-singling" class="field">
+          <label for="singling">Singling Out</label>
+          <small class="hint">Isolating a specific individual’s record (non-aggregated).</small>
+          <div id="singling" class="segmented short" role="radiogroup" aria-label="Singling Out"></div>
+        </div>
+
+        <div id="field-linkage" class="field">
+          <label>Linkage</label>
+          <small class="hint">Combining datasets. Probabilistic for aggregated; deterministic for non-aggregated.</small>
+          <div id="linkage" class="chips" role="group" aria-label="Linkage options"></div>
+        </div>
+
+        <div id="field-reid" class="field">
+          <label for="reid">Re-identification</label>
+          <small class="hint">Full evidencable linkage to a real identity.</small>
+          <div id="reid" class="segmented short" role="radiogroup" aria-label="Re-identification"></div>
+        </div>
+
+        <div id="field-pb" class="field">
+          <label for="pb">Privacy budget (perceived effort)</label>
+          <small class="hint">Reduces effective ease when Scope includes Privacy.</small>
+          <div id="pb" class="segmented long" role="radiogroup" aria-label="Privacy budget"></div>
+        </div>
+
+        <!-- Warnings moved here -->
+        <div id="forced-critical-warning" class="alert hidden">
+          Re-identification with aggregated data detected: base outcome set to <strong>Critical</strong>. Assessor override may change this; a warning will be shown if lowered.
+        </div>
+        <div id="override-lowered-warning" class="alert warn hidden">
+          Warning: Aggregated + Re-identification present — assessor lowered Overall below <strong>Critical</strong>.
+        </div>
       </div>
     </section>
 
-    <!-- Code controls -->
-    <section>
-      <h2>Code</h2>
+    <!-- 5) OVERRIDE -->
+    <section id="panel-override">
+      <h2>Override</h2>
+
+      <div class="override-row">
+        <div class="ov-label">Likelihood</div>
+        <select id="ov-l" class="select">
+          <option value="0">Auto</option>
+          <option value="1">Low</option>
+          <option value="2">Medium</option>
+          <option value="3">High</option>
+        </select>
+        <span class="calc">Calculated: <strong id="calc-l">—</strong></span>
+      </div>
+
+      <div class="override-row">
+        <div class="ov-label">Impact</div>
+        <select id="ov-i" class="select">
+          <option value="0">Auto</option>
+          <option value="1">Low</option>
+          <option value="2">Medium</option>
+          <option value="3">High</option>
+        </select>
+        <span class="calc">Calculated: <strong id="calc-i">—</strong></span>
+      </div>
+
+      <div class="override-row">
+        <div class="ov-label">Overall</div>
+        <select id="ov-o" class="select">
+          <option value="0">Auto</option>
+          <option value="1">Informational</option>
+          <option value="2">Low</option>
+          <option value="3">Medium</option>
+          <option value="4">High</option>
+          <option value="5">Critical</option>
+        </select>
+        <span class="calc">Calculated: <strong id="calc-o">—</strong></span>
+      </div>
+    </section>
+
+    <!-- 6) CODE GENERATION -->
+    <section id="panel-code-gen">
+      <h2>Code Generation</h2>
       <div class="code-row">
         <button id="btn-generate" class="btn">Generate Code</button>
-        <input id="code-output" class="code" type="text" readonly placeholder="Code will appear here…" />
-        <button id="btn-copy" class="btn ghost" title="Copy code to clipboard">Copy</button>
+        <input id="code-output" class="code" type="text" readonly placeholder="Generated [ref]-[code] will appear here…" />
+        <button id="btn-copy" class="btn ghost">Copy</button>
       </div>
-      <div class="code-row">
-        <input id="code-input" class="code" type="text" placeholder="Paste a code to apply…" />
-        <button id="btn-apply" class="btn">Apply Code</button>
-        <button id="btn-reset" class="btn danger">Reset</button>
-      </div>
-      <small class="hint">Shareable link updates automatically (uses URL hash).</small>
+      <small class="hint">The URL hash updates automatically with the generated code.</small>
       <div class="sharelink" id="share-link" aria-live="polite"></div>
     </section>
 
     <footer>
-      <small>v1 • Codes are versioned and include CRC-8 to catch typos.</small>
+      <small>Privacy Risk Rating — v2 • Codes are versioned and CRC-8 checked.</small>
     </footer>
   </main>
+
+  <!-- Floating reset button -->
+  <button id="btn-reset-floating" class="btn danger floating-reset" title="Reset all selections">Reset</button>
 
   <script src="app.js" defer></script>
 </body>
