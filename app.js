@@ -6,7 +6,7 @@
 const CONFIG = {
   version: 1,
   labels: {
-    levels: ["Low", "Medium", "High"], // 1..3 in UI
+    levels: ["NA", "Low", "Medium", "High"], // 1..3 in UI
     riskType: ["Security", "Privacy", "Security & Privacy"],
     idTypes: ["Averaging Attack", "Singling Out", "Inference", "Linkage"],
     overallBands: ["Informational", "Low", "Medium", "High", "Critical"],
