@@ -235,14 +235,11 @@ Byte4: bits 0-2 ovO bits1-3 (0..5), 3-7 reserved
 
 ## 📄 License
 
-Add your preferred license (e.g., MIT) here.
+TBC
 
 ---
 
 ## 🙋 FAQ
-
-**Why isn’t the Finding Reference stored in the code?**  
-To keep codes short and avoid embedding free text; the reference is a visual prefix only.
 
 **Can I change thresholds/weights?**  
 Yes. All tunables live in the `CONFIG` block at the top of `app.js`.
