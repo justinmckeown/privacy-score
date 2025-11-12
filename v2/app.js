@@ -7,88 +7,52 @@ if (!Element.prototype.replaceChildren) {
 }
 
 /* =========================================================
-   Privacy Risk Rating — v3
-   Changes:
-   - CIA now 0..3 (NA..High), normalized by /3
-   - Added Control Mitigations: Prevention, Detection, Response (0..4)
-   - Privacy Budget moved under Prevention; visible only when scope includes Privacy AND data type includes Aggregated
-   - Likelihood: multiplicative mitigation model; Negated slightly increases likelihood
-   - Code bumped to v3 with compact 5-byte payload (new packing)
+   Privacy Risk Rating — v2.1 (refinements)
    ========================================================= */
 
 const CONFIG = {
-  version: 3,
+  version: 2,
 
   labels: {
     scope: ["Privacy", "Security", "Privacy & Security"],
     dataType: ["Aggregated", "Non-aggregated", "Aggregated & Non-aggregated"],
-    ease: ["Trivial", "Easy", "Medium", "Hard", "Expert"],       // UI order; we store 5..1
-    cia: ["NA", "Low", "Medium", "High"],                         // 0..3   (removed 'Critical')
-    avg: ["NA", "Deidentified", "Identified"],                    // 0,0.5,1
-    inference: ["NA", "Large", "Medium", "Small"],                // 0,1/3,2/3,1
-    bin: ["NA", "True"],                                          // 0,1
-    budget: ["NA", "Low", "Medium", "High"],                      // 0.00,0.20,0.40,0.60 (if agg+privacy)
-    ctrl5: ["NA", "Negated", "Weak", "Medium", "Strong"],         // 0..4
-    override3: ["Auto", "Low", "Medium", "High"],                 // 0..3
+    ease: ["Trivial", "Easy", "Medium", "Hard", "Expert"], // UI order; we store 5..1
+    cia: ["NA", "Low", "Medium", "High", "Critical"],      // 0..4
+    avg: ["NA", "Deidentified", "Identified"],             // 0,0.5,1
+    inference: ["NA", "Large", "Medium", "Small"],         // 0,1/3,2/3,1
+    bin: ["NA", "True"],                                   // 0,1
+    budget: ["NA", "Low", "Medium", "High"],               // 0.00,0.20,0.40,0.60
+    override3: ["Auto", "Low", "Medium", "High"],          // 0..3
     overallBands: ["Informational", "Low", "Medium", "High", "Critical"],
   },
 
-  // Privacy attack severity weights
   privacySeverity: { averaging: 0.20, inference: 0.40, singling: 0.70, linkage: 0.85, reid: 1.00 },
-
-  // Privacy budget factors (applies under Prevention when Scope includes Privacy AND DataType includes Aggregated)
   privacyBudgetFactor: [0.00, 0.20, 0.40, 0.60],
-
-  // Mitigation factors (per level) — amount of reduction (negative increases likelihood)
-  mitigations: {
-    // Prevention applies multiplicatively with privacy budget
-    prevention:  [0.00, -0.10, 0.10, 0.25, 0.45], // NA, Negated, Weak, Medium, Strong
-    detection:   [0.00, -0.05, 0.05, 0.12, 0.20],
-    response:    [0.00, -0.05, 0.03, 0.08, 0.12],
-  },
-
-  // Thresholds → Likelihood (from effectiveEase 1..5)
   likelihoodThresholds: { high: 4.0, medium: 2.75 },
-
-  // Thresholds → Impact (from raw 0..1)
   impactThresholds: { high: 0.67, medium: 0.34 },
-
-  // 3x3 Likelihood x Impact → band index (0..4)
   overallMatrix: [
     /*Lik=1*/ [0, 1, 2],
     /*Lik=2*/ [1, 2, 3],
     /*Lik=3*/ [2, 3, 4],
   ],
 
-  // Critical bias (optional)
   criticalBias: {
     enabled: false,
-    when: (ctx) => ctx.ciaMax === 3 || (ctx.reidTrue && ctx.likelihoodLevel === 3), // adjusted for CIA max=3
+    when: (ctx) => ctx.ciaMax === 4 || (ctx.reidTrue && ctx.likelihoodLevel === 3),
   },
 
   allowOverrideForcedCritical: true,
-  storageKey: "prr.v3.state",
+  storageKey: "prr.v2.state",
 };
 
 /* --------------------------
    STATE
 --------------------------- */
 const state = {
-  // Overview
   scope: 1, dataType: 1, ease: 3,
   findingRef: "",
-
-  // Fundamentals (0..3)
   c: 0, i: 0, a: 0,
-
-  // Privacy Specific
-  avg: 0, inference: 0, singling: 0, linkage_ie: 0, linkage_ei: 0, reid: 0,
-
-  // Control Mitigations
-  prev: 0, det: 0, resp: 0,
-  pb: 0, // Privacy budget (nested under Prevention)
-
-  // Overrides
+  avg: 0, inference: 0, singling: 0, linkage_ie: 0, linkage_ei: 0, reid: 0, pb: 0,
   ovL: 0, ovI: 0, ovO: 0,
 };
 
@@ -120,6 +84,7 @@ function buildSegmented(el, labels, currentIdx, onSelect) {
     el.appendChild(btn);
   });
 }
+
 function buildSegmentedWithZero(el, labels, currentVal, onSelect) {
   el.replaceChildren();
   labels.forEach((label, i) => {
@@ -131,6 +96,7 @@ function buildSegmentedWithZero(el, labels, currentVal, onSelect) {
     el.appendChild(btn);
   });
 }
+
 function buildChips(el, defs) {
   el.replaceChildren();
   defs.forEach(def => {
@@ -151,7 +117,7 @@ function renderUI() {
   buildSegmented(document.getElementById("scope"), CONFIG.labels.scope, state.scope, v => { state.scope = v; persistAndRender(); });
   buildSegmented(document.getElementById("dataType"), CONFIG.labels.dataType, state.dataType, v => { state.dataType = v; persistAndRender(); });
 
-  // Ease: Trivial..Expert labels, store 5..1
+  // Ease: labels Trivial..Expert; store 5..1
   const easeEl = document.getElementById("ease");
   easeEl.replaceChildren();
   CONFIG.labels.ease.forEach((label, i) => {
@@ -166,7 +132,7 @@ function renderUI() {
 
   document.getElementById("findingRef").value = state.findingRef;
 
-  // Fundamentals (0..3)
+  // Fundamentals
   buildSegmentedWithZero(document.getElementById("confidentiality"), CONFIG.labels.cia, state.c, v => { state.c = v; persistAndRender(); });
   buildSegmentedWithZero(document.getElementById("integrity"),       CONFIG.labels.cia, state.i, v => { state.i = v; persistAndRender(); });
   buildSegmentedWithZero(document.getElementById("availability"),    CONFIG.labels.cia, state.a, v => { state.a = v; persistAndRender(); });
@@ -180,14 +146,18 @@ function renderUI() {
   const nonagg = (state.dataType === 2);
   const both = (state.dataType === 3);
 
-  // Privacy fields visibility
-  toggleField("field-avg",       privacyEnabled && (agg || both));
+  // Toggle hide per-field
+  toggleField("field-avg", privacyEnabled && (agg || both));
   toggleField("field-inference", privacyEnabled && (agg || both));
-  toggleField("field-singling",  privacyEnabled && (nonagg || both));
-  toggleField("field-linkage",   privacyEnabled && (agg || nonagg || both));
-  toggleField("field-reid",      privacyEnabled && (agg || nonagg || both));
+  toggleField("field-singling", privacyEnabled && (nonagg || both));
+  toggleField("field-linkage", privacyEnabled && (agg || nonagg || both));
+  toggleField("field-reid", privacyEnabled && (agg || nonagg || both));
+  toggleField("field-pb", privacyEnabled && (agg || both)); // only when aggregated is included
+  if (!(privacyEnabled && (agg || both))) { state.pb = 0; }
 
-  // Build privacy controls
+
+
+  // Build controls (clicks are ignored by hidden fields anyway)
   buildSegmentedWithZero(document.getElementById("avg"), CONFIG.labels.avg, state.avg, v => { state.avg = v; persistAndRender(); });
   buildSegmentedWithZero(document.getElementById("inference"), CONFIG.labels.inference, state.inference, v => { state.inference = v; persistAndRender(); });
   buildSegmentedWithZero(document.getElementById("singling"), CONFIG.labels.bin, state.singling, v => { state.singling = v; persistAndRender(); });
@@ -196,31 +166,18 @@ function renderUI() {
     { label: "External → Internal", get: () => state.linkage_ei, set: (x) => state.linkage_ei = x },
   ]);
   buildSegmentedWithZero(document.getElementById("reid"), CONFIG.labels.bin, state.reid, v => { state.reid = v; persistAndRender(); });
+  buildSegmentedWithZero(document.getElementById("pb"), CONFIG.labels.budget, state.pb, v => { state.pb = v; persistAndRender(); });
 
-  // Mitigations panel
-  buildSegmentedWithZero(document.getElementById("prev"), CONFIG.labels.ctrl5, state.prev, v => { state.prev = v; persistAndRender(); });
-  buildSegmentedWithZero(document.getElementById("det"),  CONFIG.labels.ctrl5, state.det,  v => { state.det = v;  persistAndRender(); });
-  buildSegmentedWithZero(document.getElementById("resp"), CONFIG.labels.ctrl5, state.resp, v => { state.resp = v; persistAndRender(); });
-
-  // Privacy Budget now under Prevention — visible only if (scope includes Privacy) AND (data type includes Aggregated)
-  const showPB = privacyEnabled && (agg || both);
-  toggleField("field-pb", showPB);
-  if (showPB) {
-    buildSegmentedWithZero(document.getElementById("pb"), CONFIG.labels.budget, state.pb, v => { state.pb = v; persistAndRender(); });
-  } else {
-    state.pb = 0; // clear when hidden
-  }
-
-  // Compute scores for Override readouts + warnings
+  // Compute scores (used for Override calculated readouts + warnings)
   const scores = computeScores(state);
 
-  // Warnings in Privacy section
+  // Warnings (now in Privacy section)
   document.getElementById("forced-critical-warning").classList.toggle("hidden", !scores.flags.forcedCriticalEligible);
   document.getElementById("override-lowered-warning").classList.toggle("hidden",
     !(scores.flags.forcedCriticalEligible && scores.flags.overallLoweredFromCritical)
   );
 
-  // Override dropdowns + calculated values
+  // Override dropdowns
   document.getElementById("ov-l").value = String(state.ovL);
   document.getElementById("ov-i").value = String(state.ovI);
   document.getElementById("ov-o").value = String(state.ovO);
@@ -250,31 +207,27 @@ function toggleField(fieldId, show) {
    Scoring
 --------------------------- */
 function computeScores(s) {
-  // Fundamentals: max(C,I,A)/3  (CIA in 0..3)
-  const ciaMax = Math.max(s.c, s.i, s.a); // 0..3
-  const fundamentals_raw = (ciaMax / 3);
+  const ciaMax = Math.max(s.c, s.i, s.a);
+  const fundamentals_raw = (ciaMax / 4);
 
-  // Privacy attacks intensities (0..1)
   const intens = {
     averaging: s.avg === 0 ? 0 : (s.avg === 1 ? 0.5 : 1.0),
     inference: [0, 1/3, 2/3, 1.0][clamp(s.inference,0,3)],
     singling: s.singling ? 1.0 : 0.0,
-    linkage:  (s.linkage_ie ? 0.5 : 0) + (s.linkage_ei ? 0.5 : 0),
-    reid:     s.reid ? 1.0 : 0.0,
+    linkage: (s.linkage_ie ? 0.5 : 0) + (s.linkage_ei ? 0.5 : 0),
+    reid: s.reid ? 1.0 : 0.0,
   };
 
-  // Applicability
   const agg = (s.dataType === 1 || s.dataType === 3);
   const nonagg = (s.dataType === 2 || s.dataType === 3);
   const applicable = {
     averaging: agg,
     inference: agg,
     singling: nonagg,
-    linkage:  agg || nonagg,
-    reid:     agg || nonagg,
+    linkage: agg || nonagg,
+    reid: agg || nonagg,
   };
 
-  // Weighted privacy average
   const weights = CONFIG.privacySeverity;
   let num = 0, den = 0;
   for (const k of Object.keys(intens)) {
@@ -282,39 +235,24 @@ function computeScores(s) {
   }
   let privacy_raw = den > 0 ? (num/den) : 0;
 
-  // Dominance
   const reidTrue = !!s.reid;
   if (reidTrue) privacy_raw = 1.0;
 
-  // Scope combiner → impact_raw
   const scopePriv = includesPrivacy(s.scope);
   let impact_raw = 0;
-  if (!scopePriv)      impact_raw = fundamentals_raw;
-  else if (s.scope===1) impact_raw = privacy_raw;
-  else                  impact_raw = Math.max(fundamentals_raw, privacy_raw);
+  if (!scopePriv) impact_raw = fundamentals_raw;
+  else if (s.scope === 1) impact_raw = privacy_raw;
+  else impact_raw = Math.max(fundamentals_raw, privacy_raw);
 
-  // Likelihood
   const ease = clamp(s.ease, 1, 5);
 
-  // Mitigations (multiplicative model)
-  const mf = CONFIG.mitigations;
-  const mPrevBase = mf.prevention[clamp(s.prev,0,4)]; // can be negative (Negated)
-  const hasAgg = agg;                                  // data type includes Aggregated?
-  const pbFactor = (scopePriv && hasAgg) ? CONFIG.privacyBudgetFactor[clamp(s.pb,0,3)] : 0.0;
+  const hasAgg = includesAggregated(s.dataType);
+  const f = (scopePriv && hasAgg) ? CONFIG.privacyBudgetFactor[clamp(s.pd,0,3)] : 0.0;
+  //const f = scopePriv ? CONFIG.privacyBudgetFactor[clamp(s.pb,0,3)] : 0.0; TODO: Delete this is above fix works
+  
+  
+  const effectiveEase = ease * (1 - f);
 
-  // Combine prevention with privacy budget: rPrev = 1 - (1-rBase)*(1-pb)
-  const rPrevCombined = 1 - (1 - mPrevBase) * (1 - pbFactor);
-  const rDet = mf.detection[clamp(s.det,0,4)];
-  const rResp = mf.response[clamp(s.resp,0,4)];
-
-  // Total multiplier on ease: (1 - rPrev) * (1 - rDet) * (1 - rResp)
-  let totalMult = (1 - rPrevCombined) * (1 - rDet) * (1 - rResp);
-  // Safety clamp (avoid extreme increases/reductions)
-  totalMult = clamp(totalMult, 0.1, 1.5);
-
-  const effectiveEase = ease * totalMult;
-
-  // Map to levels
   const lt = CONFIG.likelihoodThresholds;
   const it = CONFIG.impactThresholds;
 
@@ -322,11 +260,10 @@ function computeScores(s) {
   let baseImpactLevel = impact_raw >= it.high ? 3 : (impact_raw >= it.medium ? 2 : 1);
   let baseOverallBandIdx = CONFIG.overallMatrix[baseLikelihoodLevel - 1][baseImpactLevel - 1];
 
-  // Forced-Critical eligibility: (scope includes Privacy) AND (data type includes Aggregated) AND (ReID true)
-  const forcedCriticalEligible = scopePriv && agg && reidTrue;
+  const forcedCriticalEligible = scopePriv && includesAggregated(s.dataType) && reidTrue;
   if (forcedCriticalEligible) baseOverallBandIdx = 4;
 
-  // Apply overrides
+  // Apply overrides (L/I)
   let likelihoodLevel = baseLikelihoodLevel;
   let impactLevel = baseImpactLevel;
   if (s.ovL) likelihoodLevel = clamp(s.ovL, 1, 3);
@@ -334,6 +271,7 @@ function computeScores(s) {
 
   let overallBandIdx = CONFIG.overallMatrix[likelihoodLevel - 1][impactLevel - 1];
 
+  // If eligible, base is Critical unless Overall is explicitly overridden
   let overallLoweredFromCritical = false;
   if (forcedCriticalEligible) overallBandIdx = 4;
 
@@ -367,70 +305,25 @@ function setHash(s) { if (location.hash.slice(1) !== s) history.replaceState(nul
 function getHash() { return location.hash ? location.hash.slice(1) : ""; }
 
 /* --------------------------
-   Code v3: compact 5-byte payload + version + crc (7 bytes total)
-   Bit layout (LSB-first):
-   0..1  scope(0..2)
-   2..3  dataType(0..2)
-   4..6  ease(0..4)
-   7..8  C(0..3)
-   9..10 I(0..3)
-   11..12 A(0..3)
-   13..14 avg(0..2)
-   15..16 inference(0..3)
-   17     sing(0/1)
-   18     link_ie(0/1)
-   19     link_ei(0/1)
-   20     reid(0/1)
-   21..22 pb(0..3)
-   23..24 ovL(0..3)
-   25..26 ovI(0..3)
-   27..29 ovO(0..5)
-   30..32 prev(0..4)
-   33..35 det(0..4)
-   36..38 resp(0..4)
+   Code: v2 payload (5 bytes) + version + crc (7 bytes total)
 --------------------------- */
-
 function encodeCode(s) {
   const scope0 = clamp(s.scope,1,3) - 1;
   const dt0 = clamp(s.dataType,1,3) - 1;
   const ease0 = clamp(s.ease,1,5) - 1;
-
-  const C = clamp(s.c,0,3), I = clamp(s.i,0,3), A = clamp(s.a,0,3);
+  const c = clamp(s.c,0,4), i = clamp(s.i,0,4), a = clamp(s.a,0,4);
   const avg = clamp(s.avg,0,2), inf = clamp(s.inference,0,3);
-  const sing = s.singling ? 1 : 0, lie = s.linkage_ie ? 1 : 0, lei = s.linkage_ei ? 1 : 0, reid = s.reid ? 1 : 0;
-  const pb = clamp(s.pb,0,3);
+  const sing = s.singling ? 1 : 0, lie = s.linkage_ie ? 1 : 0, lei = s.linkage_ei ? 1 : 0;
+  const reid = s.reid ? 1 : 0, pb = clamp(s.pb,0,3);
   const ovL = clamp(s.ovL,0,3), ovI = clamp(s.ovI,0,3), ovO = clamp(s.ovO,0,5);
-  const prev = clamp(s.prev,0,4), det = clamp(s.det,0,4), resp = clamp(s.resp,0,4);
 
-  let v = 0n;
-  const set = (val, off) => { v |= (BigInt(val) << BigInt(off)); };
+  const b0 = (scope0) | (dt0<<2) | (ease0<<4) | ((c & 0x1)<<7);
+  const b1 = ((c>>1)&0x7) | ((i&0x7)<<3) | ((a&0x3)<<6);
+  const b2 = ((a>>2)&0x1) | ((avg&0x3)<<1) | ((inf&0x3)<<3) | ((sing&0x1)<<5) | ((lie&0x1)<<6) | ((lei&0x1)<<7);
+  const b3 = (reid&0x1) | ((pb&0x3)<<1) | ((ovL&0x3)<<3) | ((ovI&0x3)<<5) | ((ovO&0x1)<<7);
+  const b4 = ((ovO>>1)&0x7);
 
-  set(scope0, 0);
-  set(dt0, 2);
-  set(ease0, 4);
-  set(C, 7);
-  set(I, 9);
-  set(A, 11);
-  set(avg, 13);
-  set(inf, 15);
-  set(sing, 17);
-  set(lie, 18);
-  set(lei, 19);
-  set(reid, 20);
-  set(pb, 21);
-  set(ovL, 23);
-  set(ovI, 25);
-  set(ovO, 27);
-  set(prev, 30);
-  set(det, 33);
-  set(resp, 36);
-
-  // Emit 5 payload bytes
-  const payload = new Uint8Array(5);
-  for (let i = 0; i < 5; i++) {
-    payload[i] = Number((v >> BigInt(8*i)) & 0xffn);
-  }
-
+  const payload = new Uint8Array([b0,b1,b2,b3,b4]);
   const version = CONFIG.version & 0xff;
   const crc = crc8(payload);
   const bytes = new Uint8Array([version, ...payload, crc]);
@@ -440,44 +333,48 @@ function encodeCode(s) {
 function decodeCode(code) {
   const bytes = base64UrlDecode(code);
   if (bytes.length !== 7) throw new Error("Invalid code length");
-  const [version, ...rest] = bytes;
+  const [version, b0,b1,b2,b3,b4, crc] = bytes;
   if (version !== CONFIG.version) throw new Error(`Unsupported version: ${version}`);
-  const payload = new Uint8Array(rest.slice(0,5));
-  const crc = rest[5];
+  const payload = new Uint8Array([b0,b1,b2,b3,b4]);
   if (crc8(payload) !== crc) throw new Error("Invalid code (CRC mismatch)");
 
-  // Rebuild BigInt
-  let v = 0n;
-  for (let i = 4; i >= 0; i--) {
-    v = (v << 8n) | BigInt(payload[i]);
-  }
-  const get = (off, bits) => Number((v >> BigInt(off)) & ((1n << BigInt(bits)) - 1n));
-
   const s = { ...state };
-  s.scope = get(0,2) + 1;
-  s.dataType = get(2,2) + 1;
-  s.ease = get(4,3) + 1;
+  const scope0 = (b0) & 0x3;
+  const dt0 = (b0>>2) & 0x3;
+  const ease0 = (b0>>4) & 0x7;
+  const c0 = (b0>>7) & 0x1;
+  const cRest = (b1) & 0x7;
+  const i = (b1>>3) & 0x7;
+  const aLow2 = (b1>>6) & 0x3;
+  const aHigh1 = (b2) & 0x1;
+  const avg = (b2>>1) & 0x3;
+  const inf = (b2>>3) & 0x3;
+  const sing = (b2>>5) & 0x1;
+  const lie = (b2>>6) & 0x1;
+  const lei = (b2>>7) & 0x1;
+  const reid = (b3) & 0x1;
+  const pb = (b3>>1) & 0x3;
+  const ovL = (b3>>3) & 0x3;
+  const ovI = (b3>>5) & 0x3;
+  const ovOlow = (b3>>7) & 0x1;
+  const ovOhigh = (b4) & 0x7;
 
-  s.c = get(7,2);
-  s.i = get(9,2);
-  s.a = get(11,2);
-
-  s.avg = get(13,2);
-  s.inference = get(15,2);
-  s.singling = get(17,1);
-  s.linkage_ie = get(18,1);
-  s.linkage_ei = get(19,1);
-  s.reid = get(20,1);
-
-  s.pb = get(21,2);
-
-  s.ovL = get(23,2);
-  s.ovI = get(25,2);
-  s.ovO = get(27,3);
-
-  s.prev = get(30,3);
-  s.det  = get(33,3);
-  s.resp = get(36,3);
+  s.scope = scope0 + 1;
+  s.dataType = dt0 + 1;
+  s.ease = ease0 + 1;
+  s.c = (cRest<<1) | c0;
+  s.i = i;
+  s.a = (aHigh1<<2) | aLow2;
+  s.avg = avg;
+  s.inference = inf;
+  s.singling = sing;
+  s.linkage_ie = lie;
+  s.linkage_ei = lei;
+  s.reid = reid;
+  s.pb = pb;
+  s.ovL = ovL;
+  s.ovI = ovI;
+  s.ovO = (ovOhigh<<1) | ovOlow;
 
   return s;
 }
@@ -549,8 +446,7 @@ function resetAll() {
     scope: 1, dataType: 1, ease: 3,
     findingRef: "",
     c: 0, i: 0, a: 0,
-    avg: 0, inference: 0, singling: 0, linkage_ie: 0, linkage_ei: 0, reid: 0,
-    prev: 0, det: 0, resp: 0, pb: 0,
+    avg: 0, inference: 0, singling: 0, linkage_ie: 0, linkage_ei: 0, reid: 0, pb: 0,
     ovL: 0, ovI: 0, ovO: 0,
   });
   clearPersist();

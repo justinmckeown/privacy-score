@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Privacy Risk Rating (v3)</title>
+  <title>Privacy Risk Rating (v2)</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -12,6 +12,7 @@
     <!-- 1) CODE INPUT -->
     <section id="panel-code-input">
       <h2>Code Input</h2>
+      <p>Input an existing code here to render the corresponding settings in the view</p>
       <div class="code-row">
         <input id="finding-ref-input" class="code" type="text" placeholder="Finding Reference (optional, e.g., RPT-12.3)" />
         <input id="code-input" class="code" type="text" placeholder="Paste [ref]-[code] or just [code]…" />
@@ -27,6 +28,7 @@
       <div class="field">
         <label for="findingRef">Finding Reference</label>
         <input id="findingRef" class="code" type="text" placeholder="Optional label to prefix the generated code (e.g., RPT-12.3)" />
+        <small class="hint">Add your finding ID and it will become part of the reference url</small>
       </div>
 
       <div class="field">
@@ -44,7 +46,7 @@
       <div class="field">
         <label for="ease">Ease of execution</label>
         <div id="ease" class="segmented" role="radiogroup" aria-label="Ease of execution"></div>
-        <small class="hint">Single overall driver for Likelihood (Trivial=5 … Expert=1).</small>
+        <small class="hint">Single overall driver for Likelihood (Trivial=5 … Expert=1). Privacy budget may reduce this.</small>
       </div>
     </section>
 
@@ -107,44 +109,19 @@
           <div id="reid" class="segmented short" role="radiogroup" aria-label="Re-identification"></div>
         </div>
 
-        <!-- Forced-critical warnings stay here -->
+        <div id="field-pb" class="field">
+          <label for="pb">Privacy budget (perceived effort)</label>
+          <small class="hint">Reduces effective ease when Scope includes Privacy.</small>
+          <div id="pb" class="segmented long" role="radiogroup" aria-label="Privacy budget"></div>
+        </div>
+
+        <!-- Warnings moved here -->
         <div id="forced-critical-warning" class="alert hidden">
           Re-identification with aggregated data detected: base outcome set to <strong>Critical</strong>. Assessor override may change this; a warning will be shown if lowered.
         </div>
         <div id="override-lowered-warning" class="alert warn hidden">
           Warning: Aggregated + Re-identification present — assessor lowered Overall below <strong>Critical</strong>.
         </div>
-      </div>
-    </section>
-
-    <!-- NEW 4.5) CONTROL MITIGATIONS -->
-    <section id="panel-mitigations">
-      <h2>Control Mitigations</h2>
-    
-      <!-- Privacy Budget moved here; visible only when Scope includes Privacy AND Data type includes Aggregated -->
-      <div id="field-pb" class="field" style="margin-top:10px;">
-        <label for="pb">Privacy budget (perceived effort)</label>
-        <small class="hint">Additional reduction when working with aggregated privacy data.</small>
-        <div id="pb" class="segmented long" role="radiogroup" aria-label="Privacy budget"></div>
-      </div>
-    </div>
-
-      <div id="field-prevention" class="field">
-        <label for="prev">Prevention Controls</label>
-        <small class="hint">Strength of preventive measures that reduce the feasibility of the attack.</small>
-        <div id="prev" class="segmented long" role="radiogroup" aria-label="Prevention Controls"></div>
-
-        
-      <div id="field-detection" class="field">
-        <label for="det">Detection Controls</label>
-        <small class="hint">Monitoring/alerting that deters or shortens the attack window.</small>
-        <div id="det" class="segmented long" role="radiogroup" aria-label="Detection Controls"></div>
-      </div>
-
-      <div id="field-response" class="field">
-        <label for="resp">Response Controls</label>
-        <small class="hint">Containment/rollback that reduces the chance of successful exploitation.</small>
-        <div id="resp" class="segmented long" role="radiogroup" aria-label="Response Controls"></div>
       </div>
     </section>
 
@@ -201,7 +178,7 @@
     </section>
 
     <footer>
-      <small>Privacy Risk Rating — v3 • Codes are versioned and CRC-8 checked.</small>
+      <small>Privacy Risk Rating — v2 • Codes are versioned and CRC-8 checked.</small>
     </footer>
   </main>
 
