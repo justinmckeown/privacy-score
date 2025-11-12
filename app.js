@@ -17,17 +17,17 @@ if (!Element.prototype.replaceChildren) {
    ========================================================= */
 
 const CONFIG = {
-  version: 3,
+  version: 4,
 
   labels: {
-    scope: ["Privacy", "Security", "Privacy & Security"],
+    scope: ["Privacy", "Security", "Privacy & Security"],  
     dataType: ["Aggregated", "Non-aggregated", "Aggregated & Non-aggregated"],
     ease: ["Trivial", "Easy", "Medium", "Hard", "Expert"],       // UI order; we store 5..1
     cia: ["NA", "Low", "Medium", "High"],                         // 0..3   (removed 'Critical')
     avg: ["NA", "Deidentified", "Identified"],                    // 0,0.5,1
     inference: ["NA", "Large", "Medium", "Small"],                // 0,1/3,2/3,1
     bin: ["NA", "True"],                                          // 0,1
-    budget: ["NA", "Low", "Medium", "High"],                      // 0.00,0.20,0.40,0.60 (if agg+privacy)
+    budget: ["NA", "Negated", "Low", "Medium", "High"],            // 3 bits now (includes Negated)
     ctrl5: ["NA", "Negated", "Weak", "Medium", "Strong"],         // 0..4
     override3: ["Auto", "Low", "Medium", "High"],                 // 0..3
     overallBands: ["Informational", "Low", "Medium", "High", "Critical"],
@@ -37,7 +37,7 @@ const CONFIG = {
   privacySeverity: { averaging: 0.20, inference: 0.40, singling: 0.70, linkage: 0.85, reid: 1.00 },
 
   // Privacy budget factors (applies under Prevention when Scope includes Privacy AND DataType includes Aggregated)
-  privacyBudgetFactor: [0.00, 0.20, 0.40, 0.60],
+  privacyBudgetFactor: [0.00, -0.10, 0.20, 0.40, 0.60], // NA, Negated, Low, Medium, High,
 
   // Mitigation factors (per level) — amount of reduction (negative increases likelihood)
   mitigations: {
@@ -418,12 +418,12 @@ function encodeCode(s) {
   set(lei, 19);
   set(reid, 20);
   set(pb, 21);
-  set(ovL, 23);
-  set(ovI, 25);
+  set(ovL, 24);
+  set(ovI, 26);
   set(ovO, 27);
-  set(prev, 30);
-  set(det, 33);
-  set(resp, 36);
+  set(prev, 31);
+  set(det, 34);
+  set(resp, 37);
 
   // Emit 5 payload bytes
   const payload = new Uint8Array(5);
@@ -469,15 +469,15 @@ function decodeCode(code) {
   s.linkage_ei = get(19,1);
   s.reid = get(20,1);
 
-  s.pb = get(21,2);
+  s.pb = get(21,3);
 
-  s.ovL = get(23,2);
-  s.ovI = get(25,2);
-  s.ovO = get(27,3);
+  s.ovL = get(24,2);
+  s.ovI = get(26,2);
+  s.ovO = get(28,3);
 
-  s.prev = get(30,3);
-  s.det  = get(33,3);
-  s.resp = get(36,3);
+  s.prev = get(31,3);
+  s.det  = get(34,3);
+  s.resp = get(37,3);
 
   return s;
 }

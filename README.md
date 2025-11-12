@@ -1,8 +1,7 @@
-# Privacy Risk Rating (v2)
+# Privacy Risk Rating (v4)
 
-A client‑side, single‑page web app to generate a **privacy risk rating** from a set of structured inputs.  
-It produces a compact, **versioned share code** (Base64URL + CRC‑8) that fully reconstructs the form state.  
-Optionally, a **Finding Reference** prefix can be prepended for external report linkage: `REF-[code]`.
+A client‑side, single‑page web app to generate a **privacy risk rating** with a compact, shareable code.
+This version (v4) adds **‘Negated’** to the **Privacy budget** control and updates the code format accordingly.
 
 > No server required. Open `index.html` in a browser.
 
@@ -10,16 +9,19 @@ Optionally, a **Finding Reference** prefix can be prepended for external report 
 
 ## ✨ Key features
 
-- Six clear panels: **Code Input**, **Overview**, **Fundamentals**, **Privacy Specific**, **Override**, **Code Generation**
-- **Scope** gating: *Security*, *Privacy*, or *Privacy & Security*
+- Six panels: **Code Input**, **Overview**, **Fundamentals**, **Privacy Specific**, **Control Mitigations**, **Override**, **Code Generation**
+- **Scope** gating (Security / Privacy / Both) + **Data Type** gating (Aggregated / Non‑aggregated / Both)
 - **Data type** gating: *Aggregated*, *Non‑aggregated*, or *Both* controls visibility + scoring applicability
-- **Ease of execution** → Likelihood driver (5..1), reduced by **Privacy budget** when Aggregated is involved
+- **Ease of execution** drives Likelihood (5→1), adjusted by **Prevention / Detection / Response** controls and **Privacy budget**
+- Privacy Budget now supports **NA / Negated / Low / Medium / High**
 - **Privacy attacks** (with severity): Averaging, Inference, Singling Out, Linkage (IE/EI), Re‑identification
-- **Forced‑Critical eligibility** for *(Scope includes Privacy) ∧ (Data type includes Aggregated) ∧ (Re‑id=True)* — **overridable** with warning
+- **Forced‑Critical eligibility**: (Scope includes Privacy) ∧ (Data type includes Aggregated) ∧ (Re‑identification=True) — still **overridable** with a warning
 - **Overrides** for Likelihood/Impact/Overall + “Calculated” readouts
 - **Autosave** to `localStorage` + **floating Reset**
-- **Versioned code** (v2) with CRC‑8 to catch typos; URL hash updates for shareable links
-- Clean **corporate** UI, segmented controls, accessible HTML
+- **Versioned** share code with **CRC‑8**; URL hash mirrors the state
+- Clean, accessible UI; autosave + floating Reset
+
+
 
 ---
 
